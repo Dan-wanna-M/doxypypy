@@ -1055,7 +1055,8 @@ def main():
             sysExit(-1)
 
         # Turn the full path filename into a full path module location.
-        fullPathNamespace = args.filename.replace(sep, '.')[:-3].lstrip('.')
+        args.filename = path.abspath(args.filename)
+        fullPathNamespace = args.filename
         # we need to figure out the top level directory. We'll do that by continuously
         # walking up the directory path until there are no more __init__ files.
         top_level_guess = path.dirname(args.filename)
@@ -1066,17 +1067,13 @@ def main():
                 break
             else:
                 top_level_guess = new_top_level_guess
-        top_level_guess = path.abspath(top_level_guess)
         print(top_level_guess)
-        if not top_level_guess.endswith(sep):
-            top_level_guess += sep
-        fullPathNamespace = path.abspath(fullPathNamespace)
         print(fullPathNamespace)
         namespaceStart = len(top_level_guess)
         realNamespace = fullPathNamespace
         if namespaceStart >= 0:
             realNamespace = fullPathNamespace[namespaceStart:]
-
+        realNamespace = realNamespace.replace(sep, '.')[:-3].lstrip('.')
         if args.stripinit:
             realNamespace = realNamespace.replace('.__init__', '')
             args.useNamespace = True
