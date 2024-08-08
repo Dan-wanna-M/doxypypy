@@ -855,13 +855,10 @@ class AstWalker(NodeVisitor):
 
         # if it's a property, rewrite the definition to something Doxygen understands
         # (We'll use the getter for the documentation)
+        # OK it seems like Doxygen no longer understand this
         if node.decorator_list:
             match = AstWalker.__indentRE.match(self.lines[node.lineno - 1])
             indentStr = match.group(1) if match else ''
-            if getattr(node.decorator_list[0], "id", None) == "property":
-                self.lines[node.lineno - 1] = indentStr + "{} = property".format(node.name) + \
-                                              linesep + indentStr + "## \\private" + linesep + self.lines[
-                                                  node.lineno - 1]
             if getattr(node.decorator_list[0], "attr", None) == "setter":
                 self.lines[node.lineno - 1] = indentStr + "## \\private" + linesep + self.lines[node.lineno - 1]
 
