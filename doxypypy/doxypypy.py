@@ -843,6 +843,19 @@ class AstWalker(NodeVisitor):
         # Visit any contained nodes.
         self.generic_visit(node, containingNodes=kwargs['containingNodes'])
 
+    def _group_special_decorator(self, indentStr,header, start_lineno: int, end_lineno: int):
+        _decorator = self.lines[start_lineno]
+        line = (f"{indentStr}## @name {header}{linesep}"
+                f"{indentStr}###@{{{linesep}"
+                f"{linesep}"
+                f"{indentStr}###@}}{linesep}{linesep}")
+        # boilerplate to make rendering correct
+        line += (f"{indentStr}## @name {header}{linesep}"
+                 f"{indentStr}###@{{{linesep}{_decorator}")
+        self.lines[start_lineno] = line
+        self.lines[end_lineno] += f"{linesep}{indentStr}###@}}{linesep}"
+
+    # actually grouping the element
     def visit_FunctionDef(self, node, **kwargs):
         """
         Handle function definitions within code.
@@ -859,6 +872,16 @@ class AstWalker(NodeVisitor):
         if node.decorator_list:
             match = AstWalker.__indentRE.match(self.lines[node.lineno - 1])
             indentStr = match.group(1) if match else ''
+            if getattr(node.decorator_list[0], "id", None) == "property":
+                self._group_special_decorator(indentStr,
+                                              "Properties",
+                                              node.decorator_list[0].end_lineno - 1,
+                                              node.body[-1].end_lineno - 1)
+            if getattr(node.decorator_list[0], "id", None) == "classmethod":
+                self._group_special_decorator(indentStr,
+                                              "Class Methods",
+                                              node.decorator_list[0].end_lineno - 1,
+                                              node.body[-1].end_lineno - 1)
             if getattr(node.decorator_list[0], "attr", None) == "setter":
                 self.lines[node.lineno - 1] = indentStr + "## \\private" + linesep + self.lines[node.lineno - 1]
 
