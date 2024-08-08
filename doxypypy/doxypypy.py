@@ -845,10 +845,13 @@ class AstWalker(NodeVisitor):
 
     def _group_special_decorator(self, indentStr,header, start_lineno: int, end_lineno: int):
         _decorator = self.lines[start_lineno]
-        line = ""
+        line = (f"{indentStr}## @name {header}{linesep}"
+                f"{indentStr}###@{{{linesep}"
+                f"{linesep}"
+                f"{indentStr}###@}}{linesep}{linesep}")
         # boilerplate to make rendering correct
-        line += (f"{_decorator}{indentStr}## @name {header}{linesep}"
-                 f"{indentStr}###@{{{linesep}")
+        line += (f"{indentStr}## @name {header}{linesep}"
+                 f"{indentStr}###@{{{linesep}{_decorator}")
         self.lines[start_lineno] = line
         self.lines[end_lineno] += f"{linesep}{indentStr}###@}}{linesep}"
 
