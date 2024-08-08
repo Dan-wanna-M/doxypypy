@@ -486,7 +486,7 @@ class AstWalker(NodeVisitor):
                 # Note that this means that we need a docstring for this
                 # item to get documented.
                 if tail and lineNum == len(self.docLines) - 1:
-                    line = '{0}{1}## {2}'.format(line.rstrip(), linesep, tail)
+                    line = '{0}{1}# {2}'.format(line.rstrip(), linesep, tail)
 
                 # Add comment marker for every line.
                 line = '#{0}'.format(line.rstrip())
