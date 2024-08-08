@@ -769,6 +769,8 @@ class AstWalker(NodeVisitor):
         if get_docstring(node):
             if self.args.useNamespace:
                 fullPathNamespace = self._getFullPathName(containingNodes)
+                if fullPathNamespace[-1][0] == '__init__':
+                    fullPathNamespace.pop()
                 contextTag = '.'.join(pathTuple[0] for pathTuple in fullPathNamespace)
                 tail = '@namespace {0}'.format(contextTag)
             else:
@@ -1067,8 +1069,6 @@ def main():
                 break
             else:
                 top_level_guess = new_top_level_guess
-        print(top_level_guess)
-        print(fullPathNamespace)
         namespaceStart = len(top_level_guess)
         realNamespace = fullPathNamespace
         if namespaceStart >= 0:
