@@ -1067,9 +1067,11 @@ def main():
             else:
                 top_level_guess = new_top_level_guess
         top_level_guess = path.abspath(top_level_guess)
+        print(top_level_guess)
         if not top_level_guess.endswith(sep):
             top_level_guess += sep
         fullPathNamespace = path.abspath(fullPathNamespace)
+        print(fullPathNamespace)
         namespaceStart = len(top_level_guess)
         realNamespace = fullPathNamespace
         if namespaceStart >= 0:
