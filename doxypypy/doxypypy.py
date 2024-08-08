@@ -20,7 +20,7 @@ from re import compile as regexpCompile, IGNORECASE, MULTILINE
 from types import GeneratorType
 from sys import argv, stderr, exit as sysExit
 from os.path import basename, getsize
-from os import linesep, sep
+from os import linesep, sep, path
 from string import whitespace
 from codecs import BOM_UTF8, open as codecsOpen
 from codeop import compile_command
@@ -29,11 +29,13 @@ from chardet import detect
 
 def coroutine(func):
     """Implement the coroutine pattern as a decorator."""
+
     def __start(*args, **kwargs):
         """Automatically calls next() on the internal generator function."""
         __cr = func(*args, **kwargs)
         next(__cr)
         return __cr
+
     return __start
 
 
@@ -108,7 +110,7 @@ class AstWalker(NodeVisitor):
     # this searches for the keyword and the colons, but returns all in between as one group:
     __rst_paramRE = regexpCompile(r"^\s*(?::param(eter)?|:arg(ument)?|:key(word)?)([^:]*):\s*(.*)")
     __rst_typeRE = regexpCompile(r"^(\s*)(?::type)"
-                                 r"\s*(\w*)\s*:(.*)")   # search for :type
+                                 r"\s*(\w*)\s*:(.*)")  # search for :type
     __rst_rtypeRE = regexpCompile(r"^(\s*)(?::rtype)\s*(.*):(.*)")  # search for rtype
     __rst_returnRE = regexpCompile(r"^\s*(?::return)\s*(.*): (.*)$")
     __rst_literal_sectionRE = regexpCompile(r"^(.*)::$")
@@ -210,7 +212,7 @@ class AstWalker(NodeVisitor):
 
         lines = []  # get's filled with changed line data until it is written out again
         timeToSend = False
-        inCodeBlock = False       # local CodeBlock state
+        inCodeBlock = False  # local CodeBlock state
         inCodeBlockObj = [False]  # codeChecker CodeBlock state
         inSection = False
         in_literal_section = False
@@ -251,7 +253,7 @@ class AstWalker(NodeVisitor):
                         match = AstWalker.__blanklineRE.match(line)
                         if not match:
                             indent = len(line.expandtabs(self.args.tablength)) - \
-                                len(line.expandtabs(self.args.tablength).lstrip())
+                                     len(line.expandtabs(self.args.tablength).lstrip())
                             if indent <= sectionHeadingIndent:
                                 inSection = False
                             else:
@@ -265,7 +267,7 @@ class AstWalker(NodeVisitor):
                         if not match:
                             # evaluate only non blank lines
                             current_indent = len(line.expandtabs(self.args.tablength)) \
-                                - len(line.expandtabs(self.args.tablength).lstrip())
+                                             - len(line.expandtabs(self.args.tablength).lstrip())
                             if current_indent > sectionHeadingIndent:
                                 # just use it unchanged, but ensure it is at least 4 spaces indented
                                 # doxygen only evaluates relative indents to former indent level
@@ -304,10 +306,10 @@ class AstWalker(NodeVisitor):
                             if line[pos] == ' ':
                                 line = line[:pos] + '|' + line[pos + 1:]
                             # else:
-                                # well miss formated simple rst table
-                                # -> let the garbage flow... until next blank line...
-                                # Note: multiline rst table cells are not translateable to
-                                # simple Markdown...
+                            # well miss formated simple rst table
+                            # -> let the garbage flow... until next blank line...
+                            # Note: multiline rst table cells are not translateable to
+                            # simple Markdown...
                         lines.append("#" + line)
                         continue  # no further translation needed here
                     match = AstWalker.__returnsStartRE.match(line)
@@ -380,7 +382,7 @@ class AstWalker(NodeVisitor):
                             # found a rst table start
                             in_rst_table = True
                             current_indent = len(line.expandtabs(self.args.tablength)) \
-                                - len(line.expandtabs(self.args.tablength).lstrip())
+                                             - len(line.expandtabs(self.args.tablength).lstrip())
                             rst_table_start_line_number = lineNum
                             # get the positions of middle columns
                             rst_table_middle_column_positions = []
@@ -423,14 +425,14 @@ class AstWalker(NodeVisitor):
                                 # We've got a list of something or another
                                 itemList = []
                                 for itemMatch in AstWalker.__listItemRE.findall(self._stripOutAnds(
-                                                                                match.group(0))):
+                                        match.group(0))):
                                     itemList.append('# {0}\t{1}{2}'.format(
                                         prefix, itemMatch, linesep))
                                 line = ''.join(itemList)[1:]
                             else:
                                 match = AstWalker.__examplesStartRE.match(line)
                                 if match and lines[-1].strip() == '#' \
-                                   and self.args.autocode:
+                                        and self.args.autocode:
                                     # We've got an "example" section
                                     inCodeBlock = True
                                     inCodeBlockObj[0] = True
@@ -444,7 +446,7 @@ class AstWalker(NodeVisitor):
                                         inSection = True
                                         # What's the indentation of the section heading?
                                         sectionHeadingIndent = len(line.expandtabs(self.args.tablength)) \
-                                            - len(line.expandtabs(self.args.tablength).lstrip())
+                                                               - len(line.expandtabs(self.args.tablength).lstrip())
                                         line = line.replace(
                                             match.group(0),
                                             ' @par {0}'.format(match.group(1))
@@ -588,7 +590,7 @@ class AstWalker(NodeVisitor):
                     # Escape the effectively empty docstring.
                     break
             if len(self.docLines) == 1 or (len(self.docLines) >= 2 and (
-                self.docLines[1].strip(whitespace + '#') == '' or
+                    self.docLines[1].strip(whitespace + '#') == '' or
                     self.docLines[1].strip(whitespace + '#').startswith('@'))):
                 self.docLines[0] = "## @brief {0}".format(self.docLines[0].lstrip('#'))
                 if len(self.docLines) > 1 and self.docLines[1] == '# @par':
@@ -630,7 +632,7 @@ class AstWalker(NodeVisitor):
             fullPathNamespace = self._getFullPathName(containingNodes)
             parentType = fullPathNamespace[-2][1]
             if parentType == 'interface' and typeName == 'FunctionDef' \
-               or fullPathNamespace[-1][1] == 'interface':
+                    or fullPathNamespace[-1][1] == 'interface':
                 # defLines should always end with some kind of new line -> insert two os correct ones
                 defLines[-1] = '{0}{1}{1}{2}pass'.format(defLines[-1].rstrip(),
                                                          linesep, indentStr)
@@ -655,9 +657,9 @@ class AstWalker(NodeVisitor):
                             indentStr = match.group(1) if match else ''
                             indentLineNum += 1
                         varLines = ['{0}{1}'.format(linesep, docLine).replace(
-                                    linesep, linesep + indentStr)
-                                    for docLine in self.docLines[
-                                        firstVarLineNum: lastVarLineNum]]
+                            linesep, linesep + indentStr)
+                            for docLine in self.docLines[
+                                           firstVarLineNum: lastVarLineNum]]
                         defLines.extend(varLines)
                         self.docLines[firstVarLineNum: lastVarLineNum] = []
                         # After the property shuffling we will need to relocate
@@ -765,7 +767,7 @@ class AstWalker(NodeVisitor):
             stderr.write("# Module {0}{1}".format(self.args.fullPathNamespace,
                                                   linesep))
         if get_docstring(node):
-            if self.args.topLevelNamespace:
+            if self.args.useNamespace:
                 fullPathNamespace = self._getFullPathName(containingNodes)
                 contextTag = '.'.join(pathTuple[0] for pathTuple in fullPathNamespace)
                 tail = '@namespace {0}'.format(contextTag)
@@ -791,12 +793,12 @@ class AstWalker(NodeVisitor):
         match = AstWalker.__attributeRE.match(self.lines[lineNum])
         if match:
             self.lines[lineNum] = '{0}## @property {1}{2}{0}# {3}{2}' \
-                '{0}# @hideinitializer{2}{4}{2}'.format(
-                    match.group(1),
-                    match.group(2),
-                    linesep,
-                    match.group(3),
-                    self.lines[lineNum].rstrip()
+                                  '{0}# @hideinitializer{2}{4}{2}'.format(
+                match.group(1),
+                match.group(2),
+                linesep,
+                match.group(3),
+                self.lines[lineNum].rstrip()
             )
             if self.args.debug:
                 stderr.write("# Attribute {0.id}{1}".format(node.targets[0],
@@ -807,12 +809,12 @@ class AstWalker(NodeVisitor):
             restrictionLevel = self._checkMemberName(node.targets[0].id)
             if restrictionLevel:
                 self.lines[lineNum] = '{0}## @var {1}{2}{0}' \
-                    '# @hideinitializer{2}{0}# @{3}{2}{4}{2}'.format(
-                        indentStr,
-                        node.targets[0].id,
-                        linesep,
-                        restrictionLevel,
-                        self.lines[lineNum].rstrip()
+                                      '# @hideinitializer{2}{0}# @{3}{2}{4}{2}'.format(
+                    indentStr,
+                    node.targets[0].id,
+                    linesep,
+                    restrictionLevel,
+                    self.lines[lineNum].rstrip()
                 )
         # Visit any contained nodes.
         self.generic_visit(node, containingNodes=kwargs['containingNodes'])
@@ -856,7 +858,8 @@ class AstWalker(NodeVisitor):
             indentStr = match.group(1) if match else ''
             if getattr(node.decorator_list[0], "id", None) == "property":
                 self.lines[node.lineno - 1] = indentStr + "{} = property".format(node.name) + \
-                    linesep + indentStr + "## \\private" + linesep + self.lines[node.lineno - 1]
+                                              linesep + indentStr + "## \\private" + linesep + self.lines[
+                                                  node.lineno - 1]
             if getattr(node.decorator_list[0], "attr", None) == "setter":
                 self.lines[node.lineno - 1] = indentStr + "## \\private" + linesep + self.lines[node.lineno - 1]
 
@@ -866,13 +869,7 @@ class AstWalker(NodeVisitor):
         # is nested within a function.
         containingNodes = kwargs.get('containingNodes') or []
         containingNodes.append((node.name, 'function'))
-        if self.args.topLevelNamespace:
-            fullPathNamespace = self._getFullPathName(containingNodes)
-            contextTag = '.'.join(pathTuple[0] for pathTuple in fullPathNamespace)
-            modifiedContextTag = self._processMembers(node, contextTag)
-            tail = '@namespace {0}'.format(modifiedContextTag)
-        else:
-            tail = self._processMembers(node, '')
+        tail = self._processMembers(node, '')
         if get_docstring(node):
             last_doc_line_number = self._processDocstring(
                 node, tail, containingNodes=containingNodes)
@@ -883,6 +880,7 @@ class AstWalker(NodeVisitor):
         self.generic_visit(node, containingNodes=containingNodes)
         # Remove the item we pushed onto the containing nodes hierarchy.
         containingNodes.pop()
+
     visit_AsyncFunctionDef = visit_FunctionDef
 
     def visit_ClassDef(self, node, **kwargs):
@@ -920,20 +918,12 @@ class AstWalker(NodeVisitor):
             if self.args.debug:
                 stderr.write("# Class {0.name}{1}".format(node, linesep))
             containingNodes.append((node.name, 'class'))
-        if self.args.topLevelNamespace:
-            fullPathNamespace = self._getFullPathName(containingNodes)
-            contextTag = '.'.join(pathTuple[0] for pathTuple in fullPathNamespace)
-            tail = '@namespace {0}'.format(contextTag)
-        else:
-            tail = ''
         # Class definitions have one Doxygen-significant special case:
         # interface definitions.
         if match:
-            contextTag = '{0}{1}# @interface {2}'.format(tail,
-                                                         linesep,
-                                                         match.group(1))
+            contextTag = '# @interface {2}'.format(match.group(1))
         else:
-            contextTag = tail
+            contextTag = ''
         contextTag = self._processMembers(node, contextTag)
         if get_docstring(node):
             last_doc_line_number = self._processDocstring(
@@ -963,7 +953,7 @@ class AstWalker(NodeVisitor):
                 org_line_number = decorator.lineno - 1
                 new_line_number = last_doc_line_number - 1
                 self.lines[org_line_number:new_line_number] = self.lines[org_line_number + 1:new_line_number] \
-                    + [self.lines[org_line_number]]
+                                                              + [self.lines[org_line_number]]
 
     def parseLines(self):
         """Form an AST for the code and produce a new version of the source."""
@@ -985,6 +975,7 @@ def main():
     Starts the parser on the file given by the filename as the first
     argument on the command line.
     """
+
     def argParse():
         """
         Parse command line options.
@@ -1013,9 +1004,9 @@ def main():
             help="parse the docstring for code samples"
         )
         parser.add_argument(
-            "-n", "--ns",
-            action="store", type=str, dest="topLevelNamespace",
-            help="specify a top-level namespace that will be used to trim paths"
+            "-i", "--suppress-namespace",
+            action="store_false", dest="useNamespace", default=True,
+            help="suppress the namespace from being listed explicitly"
         )
         parser.add_argument(
             "-t", "--tablength",
@@ -1064,13 +1055,29 @@ def main():
             sysExit(-1)
 
         # Turn the full path filename into a full path module location.
-        fullPathNamespace = args.filename.replace(sep, '.')[:-3]
-        # Use any provided top-level namespace argument to trim off excess.
+        fullPathNamespace = args.filename.replace(sep, '.')[:-3].lstrip('.')
+        # we need to figure out the top level directory. We'll do that by continuously
+        # walking up the directory path until there are no more __init__ files.
+        top_level_guess = path.dirname(args.filename)
+        while path.exists(path.join(top_level_guess, '__init__.py')):
+            new_top_level_guess = path.dirname(top_level_guess)
+            if new_top_level_guess == top_level_guess:
+                # Top of the file system
+                break
+            else:
+                top_level_guess = new_top_level_guess
+        top_level_guess = path.abspath(top_level_guess)
+        if not top_level_guess.endswith(sep):
+            top_level_guess += sep
+        fullPathNamespace = path.abspath(fullPathNamespace)
+        namespaceStart = len(top_level_guess)
         realNamespace = fullPathNamespace
-        if args.topLevelNamespace:
-            namespaceStart = fullPathNamespace.find(args.topLevelNamespace)
-            if namespaceStart >= 0:
-                realNamespace = fullPathNamespace[namespaceStart:]
+        if namespaceStart >= 0:
+            realNamespace = fullPathNamespace[namespaceStart:]
+
+        if args.stripinit:
+            realNamespace = realNamespace.replace('.__init__', '')
+            args.useNamespace = True
         if args.stripinit:
             realNamespace = realNamespace.replace('.__init__', '')
         args.fullPathNamespace = realNamespace
