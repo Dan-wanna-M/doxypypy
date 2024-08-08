@@ -847,8 +847,8 @@ class AstWalker(NodeVisitor):
         _decorator = self.lines[start_lineno]
         line = ""
         # boilerplate to make rendering correct
-        line += (f"{indentStr}## @name {header}{linesep}"
-                 f"{indentStr}###@{{{linesep}{_decorator}")
+        line += (f"{_decorator}{indentStr}## @name {header}{linesep}"
+                 f"{indentStr}###@{{{linesep}")
         self.lines[start_lineno] = line
         self.lines[end_lineno] += f"{linesep}{indentStr}###@}}{linesep}"
 
